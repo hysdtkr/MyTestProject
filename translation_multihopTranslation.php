@@ -14,7 +14,7 @@ $setting = <<<json
   "serviceSetting": {
     "collection": [
       {
-        "path":"en=>ko",
+        "path":"ja=>en",
         "serviceId":"kyoto1.langrid:TwoHopTranslation",
         "binding":
         [
@@ -29,23 +29,53 @@ $setting = <<<json
         ]
       },
       {
-        "path":"en=>fr",
+        "path":"en=>ja",
         "serviceId":"kyoto1.langrid:TwoHopTranslation",
         "binding":
         [
           {
             "invocationName":"SecondTranslationPL",
-            "serviceId":"kyoto1.langrid:GoogleTranslate"
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
           },
           {
             "invocationName":"FirstTranslationPL",
-            "serviceId":"kyoto1.langrid:GoogleTranslate"
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
+          }
+        ]
+      },
+      {
+        "path":"ja=>ko",
+        "serviceId":"kyoto1.langrid:TwoHopTranslation",
+        "binding":
+        [
+          {
+            "invocationName":"SecondTranslationPL",
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
+          },
+          {
+            "invocationName":"FirstTranslationPL",
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
+          }
+        ]
+      },
+      {
+        "path":"ko=>ja",
+        "serviceId":"kyoto1.langrid:TwoHopTranslation",
+        "binding":
+        [
+          {
+            "invocationName":"SecondTranslationPL",
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
+          },
+          {
+            "invocationName":"FirstTranslationPL",
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
           }
         ]
       },
       {
         "path":"ja=>fr",
-        "serviceId":"kyoto1.langrid:ThreeHopTranslation",
+        "serviceId":"kyoto1.langrid:TwoHopTranslation",
         "binding":
         [
           {
@@ -55,9 +85,20 @@ $setting = <<<json
           {
             "invocationName":"FirstTranslationPL",
             "serviceId":"kyoto1.langrid:GoogleTranslate"
+          }
+        ]
+      },
+      {
+        "path":"fr=>ja",
+        "serviceId":"kyoto1.langrid:TwoHopTranslation",
+        "binding":
+        [
+          {
+            "invocationName":"SecondTranslationPL",
+            "serviceId":"kyoto1.langrid:GoogleTranslate"
           },
           {
-            "invocationName":"ThirdTranslationPL",
+            "invocationName":"FirstTranslationPL",
             "serviceId":"kyoto1.langrid:GoogleTranslate"
           }
         ]
@@ -68,20 +109,71 @@ $setting = <<<json
 json
     ;
 
-$obj = new MultihopTranslationConfigurator(json_decode($setting));
+$setting3hop = <<<json
+{
+  "connection":{
+    "uri": "http://langrid.org/service_manager/wsdl/{service_id}",
+    "userId": "",
+    "passwd": ""
+  },
+  "serviceSetting": {
+    "collection": [
+      {
+        "path":"ja=>en",
+        "serviceId":"kyoto1.langrid:ThreeHopTranslation",
+        "binding":
+        [
+          {
+            "invocationName":"SecondTranslationPL",
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
+          },
+          {
+            "invocationName":"FirstTranslationPL",
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
+          },
+          {
+            "invocationName":"ThirdTranslationPL",
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
+          }
+        ]
+      },
+      {
+        "path":"en=>ja",
+        "serviceId":"kyoto1.langrid:ThreeHopTranslation",
+        "binding":
+        [
+          {
+            "invocationName":"SecondTranslationPL",
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
+          },
+          {
+            "invocationName":"FirstTranslationPL",
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
+          },
+          {
+            "invocationName":"ThirdTranslationPL",
+            "serviceId":"kyoto1.langrid:KyotoUJServer"
+          }
+        ]
+      }
+    ]
+  }
+}
+json
+    ;
 
-$cli2hopA = $obj->createClient('en', 'ko');
-$cli2hopB = $obj->createClient('en', 'fr');
-$cli3hop  = $obj->createClient('ja', 'fr');
+
+$obj = new MultihopTranslationConfigurator(json_decode($setting));
+//$obj = new MultihopTranslationConfigurator(json_decode($setting3hop));
+
+$cli = $obj->createClient('ja', 'en', 'fr');
+//$cli = $obj->createClient('ja', 'ko', 'fr');
+
+//print_r($cli);
 
 try {
-    print_r($cli2hopA->multihopTranslate(Language::get('en'), array(Language::get('ja')), Language::get('ko'), 'My name is Linda.'));
-    print("<br>");
-    print_r($cli2hopB->multihopTranslate(Language::get('en'), array(Language::get('ja')), Language::get('fr'), 'My name is Linda.'));
-    print("<br>");
-
-    print_r($cli3hop->multihopTranslate(Language::get('en'), array(Language::get('ja'), Language::get('ko')), Language::get('fr'), 'My name is Linda.'));
-    print("<br>");
+    print_r($cli->multihopTranslate(Language::get('ja'), array(Language::get('en')), Language::get('ja'), 'こんにちは'));
+    //print_r($cli ->multihopTranslate(Language::get('ja'), array(Language::get('ko')), Language::get('fr'), '私はリンゴが好きです'));
     print("EOF");
 } catch (Exception $e) {
     print_r($e);
